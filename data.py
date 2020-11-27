@@ -460,7 +460,7 @@ def save_results_on_paths(model, paths, save_to="results", normalize_x=True, rgb
         im_name = os.path.split(paths[0, path_index])[-1]
         im_name, im_extension = os.path.splitext(im_name)
         im_name += ".png"
-        compound_image = test_image_from_path(model, paths[0, path_index], paths[1, path_index], normalize_x, rgb_preprocessor)
+        compound_image = test_image_from_path(model, paths[0, path_index], paths[1, path_index], rgb_preprocessor)
         for im in range(len(compound_image)):
             if len(compound_image[im].shape) < 3:
                 compound_image[im] = compound_image[im][..., None]
