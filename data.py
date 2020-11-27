@@ -481,24 +481,10 @@ def test_image_from_path(model, input_path, gt_path, rgb_preprocessor=None):
 
     if gt_path:
         gt = get_gt_image(gt_path)[..., 0]
-    input_image = cv2.cvtColor(get_image(input_path), cv2.COLOR_BGR2GRAY) / 255.0
+    input_image = cv2.cvtColor(get_image(input_path), cv2.COLOR_BGR2GRAY)[..., None] / 255.0
     if gt_path:
         return [input_image, gt, prediction]
     return [input_image, None, prediction]
-
-
-def test_images_from_paths(model, paths, rgb_preprocessor=None):
-    if rgb_preprocessor is None:
-        rgb_preprocessor = get_preprocessor(model)
-    rgb = True if rgb_preprocessor else False
-    if rgb:
-        predictions = [
-            model.predict(rgb_preprocessor(get_image(im_path))[None, ...])[
-                0, ...] for im_path in paths[0, :]]
-
-    gts = [get_gt_image(gt_path)[..., 0] for gt_path in paths[1, :]]
-    ims = [cv2.cvtColor(get_image(im_path), cv2.COLOR_BGR2GRAY) / 255.0 for im_path in paths[0, :]]
-    return [ims, gts, predictions]
 
 
 # Compare GT and predictions from images obtained by save_results_on_paths()
