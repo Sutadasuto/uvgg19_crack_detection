@@ -70,3 +70,10 @@ To get a color-coded comparison like in Figure 2 from the paper, run:
 python -c "from data import analyse_resulting_image_folder; analyse_resulting_image_folder(path/to/results_folder)"
 ```
 results_folder can be any of the 4 folders created inside the output folder of train_and_validate.py (e.g. "results_test_min_val_loss").
+
+### Test model on single image
+You can also test a trained model in a single image by running:
+```
+python test_model_on_image.py path/to/image model(either "uvgg19" to use our architecture or a path to a json model) path/to/pretrained_weights
+```
+The resulting image will be saved in the project's root
