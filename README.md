@@ -7,7 +7,7 @@ _You can download the datasets from the corresponding links, or use our link bel
 
 https://drive.google.com/drive/folders/1g-nQchtC7Adjk87KIx2Ber-10EbpHGKB?usp=sharing
 
-We provide the pruned version of CFD as described in section 4.1. "CrackDataset" contains both Aigle-RN and ESAR; when using any of these 2 datasets; the path to "CrackDataset" should be provided.
+We provide the pruned version of CFD as described in section 4.1. "CrackDataset" contains both Aigle-RN and ESAR; when using any of these 2 datasets, the path to "CrackDataset" should be provided.
 
 In the next link, we provide the weights from the model trained on each one of the provided datasets:
 
