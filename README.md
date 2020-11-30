@@ -3,7 +3,15 @@ Code used to produce the results presented in _insert our reference_
 
 This repository is compatible with CrackForest [https://github.com/cuilimeng/CrackForest-dataset] dataset; Aigle-RN and ESAR (2 out of the 3 parts of the "CrackDataset")[https://www.irit.fr/~Sylvie.Chambon/Crack_Detection_Database.html] datasets; and the cropped GAPs384 and cracktree200 [https://github.com/fyangneil/pavement-crack-detection] datasets.
 
-_You can download the datasets from the corresponding links, or use our links below. In any case, don't forget to cite the sources._
+_You can download the datasets from the corresponding links, or use our link below. In any case, don't forget to cite the sources._
+
+https://drive.google.com/drive/folders/1g-nQchtC7Adjk87KIx2Ber-10EbpHGKB?usp=sharing
+
+We provide the pruned version of CFD as described in section 4.1. "CrackDataset" contains both Aigle-RN and ESAR; when using any of these 2 datasets; the path to "CrackDataset" should be provided.
+
+In the next link, we provide the weights from the model trained on each one of the provided datasets:
+
+https://drive.google.com/drive/folders/1saPBK_0pfn-dIYF7OaBu5mukF5o4jgME?usp=sharing
 
 ## Pre-requisites
 This repository was tested on two setups:
