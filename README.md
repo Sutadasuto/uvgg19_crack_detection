@@ -34,7 +34,7 @@ python train_and_validate.py --dataset_names "cfd" "aigle-rn" --dataset_paths "p
 
 The program will then train the default model using the listed datasets. Training images are split into training and validation images using a 80/20 proportion; the model will be trained until the desired number of epochs (default: 150) or if the loss in the validation images doesn't improve for 20 epochs.
 
-After the training is done, a results_date_time folder will be created. It contains a csv file with the training history and a plot of such training history. Additionally, there are 4 folders:
+After the training is done, a results_date_time folder will be created. It contains a csv file with the training history and a plot of such training history. Additionally, there are 4 sub-folders:
 * "results_training": it contains a visual comparison of ground truth and predicted cracks in the images used for training. It contains a hdf5 with the weights from the last training epoch too.
 * "results_training_min_val_loss": the same as before, but using the weights from the epoch with the minimum loss in the test images during training (only when the model is trained more than 1 epoch).
 * "results_test": it contains a visual comparison of ground truth and predicted cracks in the images used for testing. It contains a text file with numeric metrics of the performance in the test set.
