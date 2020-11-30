@@ -76,4 +76,4 @@ You can also test a trained model in a single image by running:
 ```
 python test_model_on_image.py path/to/image model(either "uvgg19" to use our architecture or a path to a json model) path/to/pretrained_weights
 ```
-The resulting image will be saved in the project's root
+The resulting image will be saved in the project's root.
