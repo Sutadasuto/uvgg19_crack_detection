@@ -36,9 +36,9 @@ The program will then train the default model using the listed datasets. Trainin
 
 After the training is done, a results_date_time folder will be created. It contains a csv file with the training history and a plot of such training history. Additionally, there are 4 sub-folders:
 * "results_training": it contains a visual comparison of ground truth and predicted cracks in the images used for training. It contains a hdf5 with the weights from the last training epoch too.
-* "results_training_min_val_loss": the same as before, but using the weights from the epoch with the minimum loss in the test images during training (only when the model is trained more than 1 epoch).
-* "results_test": it contains a visual comparison of ground truth and predicted cracks in the images used for testing. It contains a text file with numeric metrics of the performance in the test set.
-* "results_test_min_val_loss": the same as before, but using the weights from the epoch with the minimum loss in the test images during training (only when the model is trained more than 1 epoch).
+* "results_training_min_val_loss": the same as before, but using the weights from the epoch with the minimum loss in the validation images during training (only when the model is trained more than 1 epoch).
+* "results_test": it contains a visual comparison of ground truth and predicted cracks in the images used for validation. It contains a text file with numeric metrics of the performance in the validation set.
+* "results_test_min_val_loss": the same as before, but using the weights from the epoch with the minimum loss in the validation images during training (only when the model is trained more than 1 epoch).
 
 You can "train" the model using 0 epochs. In this case, the results will be obtained using the initial weights of the network, or pre-trained weights if they are provided as argument.
 
@@ -67,6 +67,6 @@ Notice that for both, train_and_validate.py and validate.py, you can provide spe
 ### Compare overlaid ground-truth and prediction
 To get a color-coded comparison like in Figure 2 from the paper, run:
 ```
-python -c "from data import analyse_resulting_image_folder. analyse_resulting_image_folder(path/to/results_folder)"
+python -c "from data import analyse_resulting_image_folder; analyse_resulting_image_folder(path/to/results_folder)"
 ```
 results_folder can be any of the 4 folders created inside the output folder of train_and_validate.py (e.g. "results_test_min_val_loss").
