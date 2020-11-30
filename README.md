@@ -3,7 +3,7 @@ Code used to produce the results presented in _insert our reference_
 
 This repository is compatible with CrackForest [https://github.com/cuilimeng/CrackForest-dataset] dataset; Aigle-RN and ESAR (2 out of the 3 parts of the "CrackDataset")[https://www.irit.fr/~Sylvie.Chambon/Crack_Detection_Database.html] datasets; and the cropped GAPs384 and cracktree200 [https://github.com/fyangneil/pavement-crack-detection] datasets.
 
-_You can download the datasets from the corresponding links, or use our links below which. In any case, don't forget to cite the sources._
+_You can download the datasets from the corresponding links, or use our links below. In any case, don't forget to cite the sources._
 
 ## Pre-requisites
 This repository was tested on two setups:
