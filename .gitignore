@@ -11,3 +11,5 @@ __pycache*
 /*.mp4
 /training_histories
 /*.hyperopt
+/logs
+/test

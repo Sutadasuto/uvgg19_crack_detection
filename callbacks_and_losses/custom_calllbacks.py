@@ -1,4 +1,4 @@
-from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback, ReduceLROnPlateau, TensorBoard
 from data import validation_image_generator
 
 import numpy as np

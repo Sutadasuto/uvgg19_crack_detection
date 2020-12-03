@@ -18,7 +18,7 @@ from json.decoder import JSONDecodeError
 from callbacks_and_losses import custom_losses
 import data
 
-from callbacks_and_losses.custom_calllbacks import EarlyStoppingAtMinValLoss
+from callbacks_and_losses.custom_calllbacks import EarlyStoppingAtMinValLoss, ReduceLROnPlateau, TensorBoard
 from models.available_models import get_models_dict
 
 # Used for memory error in RTX2070
@@ -102,6 +102,8 @@ def main(args):
     # improved over the last 'patience' epochs.
     es = EarlyStoppingAtMinValLoss(validation_paths, file_path='%s_best.hdf5' % args.model, patience=args.patience,
                                    rgb_preprocessor=rgb_preprocessor)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir="logs")
 
     # Training begins. Note that the train image generator can use or not data augmentation through the parsed argument
     # 'use_da'
@@ -111,7 +113,7 @@ def main(args):
                                                          rgb_preprocessor=rgb_preprocessor,
                                                          data_augmentation=args.use_da),
                             epochs=args.epochs,
-                            verbose=1, callbacks=[es],
+                            verbose=1, callbacks=[es, reduce_lr, tensorboard],
                             steps_per_epoch=n_train_samples // args.batch_size)
         print("Finished!")
     except KeyboardInterrupt:
