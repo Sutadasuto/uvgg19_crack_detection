@@ -52,6 +52,7 @@ You can "train" the model using 0 epochs. In this case, the results will be obta
 * ("--learning_rate", type=float, default=1e-4, help="Learning rate for Adam optimizer.")
 * ("--epochs", type=int, default=150, help="Number of epochs to train.")
 * ("--batch_size", type=int, default=4, help="Batch size for training.")
+* ("--patience", type=int, default=20, help="Early stop patience.")
 * ("--pretrained_weights", type=str, default=None, help="Load previous weights from this location.")
 * ("--use_da", type=str, default="False", help="If 'True', training will be done using data augmentation. If 'False', just raw images will be used.")
 * ("--save_validation_paths", type=str, default="False", help="If 'True', a text file 'validation_paths.txt' containing the paths of the images used for validating will be saved in the project's root.")

@@ -1,10 +1,12 @@
 import cv2
 import importlib
 import numpy as np
+import random
 import scipy.io
 import os
 
 from math import ceil
+from tensorflow.keras.preprocessing import image
 
 
 ### Getting image paths
@@ -210,6 +212,18 @@ def noisy_version(image, noise_typ):
 
 
 def illumination_adjustment_version(image, alpha, beta):
+    image = alpha * image
+    if beta == "bright":
+        shift = 255 - np.max(image)
+    elif beta == "dark":
+        shift = -np.min(image)
+    else:
+        shift = 0
+    return np.clip(image + shift, 0, 255).astype(np.uint8)
+
+
+# The version with the previous data augmentation strategy. The one used in the paper (without data augmentation)
+def illumination_adjustment_version_legacy(image, alpha, beta):
     if image.dtype == np.uint8:
         return np.clip(alpha * (image + beta), 0, 255)
     return np.clip(alpha * (image + beta), 0.0, 1.0)
@@ -251,6 +265,59 @@ def crop_generator(im, gt, input_size):
         x = im[corner[0]:corner[0] + input_size[0], corner[1]:corner[1] + input_size[1], ...]
         y = gt[corner[0]:corner[0] + input_size[0], corner[1]:corner[1] + input_size[1], ...]
         yield [x, y]
+
+
+# A generator, creating all the possible combined augmented data for a single input pair
+def augmentation(im, gt, **kwargs):
+    noises = kwargs["noises"]
+    alphas = kwargs["alphas"]
+    betas = kwargs["betas"]
+    flips = kwargs["flips"]
+    zooms = kwargs["zooms"]
+    rot_angs = kwargs["rot_angs"]
+    shear_angs = kwargs["shear_angs"]
+
+    for noise in noises:
+        noisy = noisy_version(im, noise)
+
+        for alpha in alphas:
+            for beta in betas:
+                adjusted = illumination_adjustment_version(noisy, alpha, beta)
+
+                for flip in flips:
+                    flipped = flipped_version(adjusted, flip)
+                    flipped_gt = flipped_version(gt, flip)
+
+                    for zoom in zooms:
+                        for rot_ang in rot_angs:
+                            for shear_ang in shear_angs:
+                                affine_transformed = image.apply_affine_transform(flipped, rot_ang, shear=shear_ang, zx=zoom, zy=zoom, fill_mode="reflect")
+                                affine_transformed_gt = image.apply_affine_transform(flipped_gt, rot_ang, shear=shear_ang, zx=zoom, zy=zoom, fill_mode="reflect")
+                                yield [affine_transformed, affine_transformed_gt]
+
+
+# Apply a random transformation to an input pair
+def random_transformation(im, gt, **kwargs):
+    noise = random.choice(kwargs["noises"])
+    alpha = random.choice(kwargs["alphas"])
+    beta = random.choice(kwargs["betas"])
+    flip = random.choice(kwargs["flips"])
+    zoom = random.choice(kwargs["zooms"])
+    rot_ang = random.choice(kwargs["rot_angs"])
+    shear_ang = random.choice(kwargs["shear_angs"])
+
+    noisy = noisy_version(im, noise)
+    adjusted = illumination_adjustment_version(noisy, alpha, beta)
+
+    flipped = flipped_version(adjusted, flip)
+    flipped_gt = flipped_version(gt, flip)
+
+    affine_transformed = image.apply_affine_transform(flipped, rot_ang, shear=shear_ang, zx=zoom, zy=zoom,
+                                                      fill_mode="reflect")
+    affine_transformed_gt = image.apply_affine_transform(flipped_gt, rot_ang, shear=shear_ang, zx=zoom, zy=zoom,
+                                                         fill_mode="reflect")
+
+    return affine_transformed, affine_transformed_gt
 
 
 # Image generators
@@ -307,7 +374,223 @@ def validation_image_generator(paths, batch_size=1, rgb_preprocessor=None):
         yield np.array(batch_x), np.array(batch_y)
 
 
+# This version applies a random transformation to each input pair before feeding it to the model
 def train_image_generator(paths, input_size, batch_size=1, count_samples_mode=False,
+                          rgb_preprocessor=None, data_augmentation=True):
+    _, n_images = paths.shape
+    rgb = True if rgb_preprocessor else False
+
+    # All available transformations for data augmentation
+    if data_augmentation:
+        augmentation_params = {
+            "noises": [None, "gauss", "s&p"],
+            "alphas": [1.0, 0.8],  # Simple contrast control
+            "betas": [None, "bright", "dark"],  # Simple brightness control
+            "flips": [None, "h", "v"],  # Horizontal, Vertical
+            "zooms": [1.0, 2.0, 1.5],  # Zoom rate in both axis; >1.0 zooms out
+            "rot_angs": [i*5.0 for i in range(int(90.0/5.0 + 1))],  # Rotation angle in degrees
+            "shear_angs": [i*5.0 for i in range(int(45.0/5.0 + 1))]  # Shear angle in degrees
+        }
+
+    # This means no noise, no illumination adjustment, no rotation and no flip (i.e. only the original image is
+    # provided)
+    else:
+        augmentation_params = {
+            "noises": [None],  # s&p = salt and pepper
+            "alphas": [1.0],  # Simple contrast control
+            "betas": [None],  # Simple brightness control
+            "flips": [None],  # Horizontal, Vertical
+            "zooms": [1.0],  # Zoom rate in both axis; >1.0 zooms out
+            "rot_angs": [0.0],  # Degrees
+            "shear_angs": [0.0],  # Degrees
+        }
+
+    i = -1
+    prev_im = False
+    n_samples = 0
+
+    while True:
+        batch_x = []
+        batch_y = []
+        b = 0
+        while b < batch_size:
+
+            if not prev_im:
+                i += 1
+
+                if i == n_images:
+                    if count_samples_mode:
+                        yield n_samples
+                    i = 0
+                    np.random.shuffle(paths.transpose())
+
+                if count_samples_mode:
+                    print("\r%s/%s paths analyzed so far" % (str(i + 1).zfill(len(str(n_images))), n_images), end='')
+
+                im_path = paths[0][i]
+                gt_path = paths[1][i]
+
+                or_im = get_image(im_path)
+                or_gt = get_gt_image(gt_path)
+
+            if input_size:
+                if not prev_im:
+                    win_gen = crop_generator(or_im, or_gt, input_size)
+                    prev_im = True
+                try:
+                    [im, gt] = next(win_gen)
+                except StopIteration:
+                    prev_im = False
+                    continue
+
+                x, y = random_transformation(im, gt, **augmentation_params)
+                if not os.path.exists("test"):
+                    os.makedirs("test")
+                cv2.imwrite("test/%s.png" % n_samples, x)
+                cv2.imwrite("test/%s_gt.png" % n_samples, 255*y)
+
+                x = manual_padding(x, 4)
+                y = manual_padding(y, 4)
+                if rgb:
+                    batch_x.append(rgb_preprocessor(x))
+                else:
+                    batch_x.append(x)
+                batch_y.append(y)
+                n_samples += 1
+                b += 1
+
+            else:
+                im, gt = random_transformation(or_im, or_gt, **augmentation_params)
+                im = manual_padding(im, 4)
+                if rgb:
+                    batch_x.append(rgb_preprocessor(im))
+                else:
+                    batch_x.append(im)
+                gt = manual_padding(gt, 4)
+                batch_y.append(gt)
+                n_samples += 1
+                b += 1
+
+        if not count_samples_mode:
+            yield np.array(batch_x), np.array(batch_y)
+
+
+# This version creates all the available transformations of an input pair during each epoch
+def train_image_generator_exhaustive(paths, input_size, batch_size=1, count_samples_mode=False,
+                          rgb_preprocessor=None, data_augmentation=True):
+    _, n_images = paths.shape
+    rgb = True if rgb_preprocessor else False
+
+    # All available transformations for data augmentation
+    if data_augmentation:
+        augmentation_params = {
+            "noises": [None, "gauss"],
+            "alphas": [1.0, 0.8],  # Simple contrast control
+            "betas": [None, "bright", "dark"],  # Simple brightness control
+            "flips": [None, "h", "v"],  # Horizontal, Vertical
+            "zooms": [1.0, 2.0, 1.5],  # Zoom rate in both axis; >1.0 zooms out
+            "rot_angs": [0.0, 45.0, 90.0],  # Rotation angle in degrees
+            "shear_angs": [0.0, 45.0]  # Shear angle in degrees
+        }
+
+    # This means no noise, no illumination adjustment, no rotation and no flip (i.e. only the original image is
+    # provided)
+    else:
+        augmentation_params = {
+            "noises": [None],  # s&p = salt and pepper
+            "alphas": [1.0],  # Simple contrast control
+            "betas": [None],  # Simple brightness control
+            "flips": [None],  # Horizontal, Vertical
+            "zooms": [1.0],  # Zoom rate in both axis; >1.0 zooms out
+            "rot_angs": [0.0],  # Degrees
+            "shear_angs": [0.0],  # Degrees
+        }
+
+    i = -1
+    prev_im = False
+    prev_crop = False
+    n_samples = 0
+
+    while True:
+        batch_x = []
+        batch_y = []
+        b = 0
+        while b < batch_size:
+
+            if not prev_im:
+                i += 1
+
+                if i == n_images:
+                    if count_samples_mode:
+                        yield n_samples
+                    i = 0
+                    np.random.shuffle(paths.transpose())
+
+                if count_samples_mode:
+                    print("\r%s/%s paths analyzed so far" % (str(i + 1).zfill(len(str(n_images))), n_images), end='')
+
+                im_path = paths[0][i]
+                gt_path = paths[1][i]
+
+                or_im = get_image(im_path)
+                or_gt = get_gt_image(gt_path)
+
+            if input_size:
+                if not prev_im:
+                    win_gen = crop_generator(or_im, or_gt, input_size)
+                    prev_im = True
+                try:
+                    if not prev_crop:
+                        [im, gt] = next(win_gen)
+                except StopIteration:
+                    prev_im = False
+                    continue
+
+                if not prev_crop:
+                    aug_gen = augmentation(im, gt, **augmentation_params)
+                    prev_crop = True
+                try:
+                    [x, y] = next(aug_gen)
+                except StopIteration:
+                    prev_crop = False
+                    continue
+
+                x = manual_padding(x, 4)
+                y = manual_padding(y, 4)
+                if rgb:
+                    batch_x.append(rgb_preprocessor(x))
+                else:
+                    batch_x.append(x)
+                batch_y.append(y)
+                n_samples += 1
+                b += 1
+
+            else:
+                if not prev_im:
+                    aug_gen = augmentation(or_im, or_gt, **augmentation_params)
+                    prev_im = True
+                try:
+                    [im, gt] = next(aug_gen)
+                except StopIteration:
+                    prev_im = False
+                    continue
+
+                im = manual_padding(im, 4)
+                if rgb:
+                    batch_x.append(rgb_preprocessor(im))
+                else:
+                    batch_x.append(im)
+                gt = manual_padding(gt, 4)
+                batch_y.append(gt)
+                n_samples += 1
+                b += 1
+
+        if not count_samples_mode:
+            yield np.array(batch_x), np.array(batch_y)
+
+
+# The version with the previous data augmentation strategy. The one used in the paper (without data augmentation)
+def train_image_generator_legacy(paths, input_size, batch_size=1, count_samples_mode=False,
                           rgb_preprocessor=None, data_augmentation=True):
     _, n_images = paths.shape
     rgb = True if rgb_preprocessor else False

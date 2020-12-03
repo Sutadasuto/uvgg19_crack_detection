@@ -100,7 +100,7 @@ def main(args):
     # A customized early stopping callback. At each epoch end, the callback will test the current weights on the
     # validation set (using whole images instead of patches) and stop the training if the minimum validation loss hasn't
     # improved over the last 'patience' epochs.
-    es = EarlyStoppingAtMinValLoss(validation_paths, file_path='%s_best.hdf5' % args.model, patience=20,
+    es = EarlyStoppingAtMinValLoss(validation_paths, file_path='%s_best.hdf5' % args.model, patience=args.patience,
                                    rgb_preprocessor=rgb_preprocessor)
 
     # Training begins. Note that the train image generator can use or not data augmentation through the parsed argument
@@ -205,6 +205,7 @@ def parse_args(args=None):
     parser.add_argument("--learning_rate", type=float, default=1e-4, help="Learning rate for Adam optimizer.")
     parser.add_argument("--epochs", type=int, default=150, help="Number of epochs to train.")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for training.")
+    parser.add_argument("--patience", type=int, default=20, help="Early stop patience.")
     parser.add_argument("--pretrained_weights", type=str, default=None,
                         help="Load previous weights from this location.")
     parser.add_argument("--use_da", type=str, default="False", help="If 'True', training will be done using data "
