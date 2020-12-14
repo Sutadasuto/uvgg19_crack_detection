@@ -192,10 +192,10 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset_names", type=str, nargs="+",
                         help="Must be one of: 'cfd', 'cfd-pruned', 'aigle-rn', 'esar', 'crack500', 'gaps384', "
-                             "'cracktree200'")
+                             "'cracktree200', 'text'")
     parser.add_argument("--dataset_paths", type=str, nargs="+",
-                        help="Path to the folders containing the respective datasets as downloaded from the original "
-                             "source.")
+                        help="Path to the folders or files containing the respective datasets as downloaded from the "
+                             "original source.")
     parser.add_argument("--model", type=str, default="uvgg19",
                         help="Network to use. It can be either a name from 'models.available_models.py' or a path to a "
                              "json file.")
