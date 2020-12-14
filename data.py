@@ -15,7 +15,7 @@ def create_image_paths(dataset_names, dataset_paths):
     for idx, dataset in enumerate(dataset_names):
         dataset_name = dataset
         dataset_path = dataset_paths[idx]
-        if dataset_name == "cfd" or dataset_name == "cfd-pruned":
+        if dataset_name == "cfd" or dataset_name == "cfd-pruned" or dataset_name == "cfd-corrected":
             or_im_paths, gt_paths = paths_generator_cfd(dataset_path)
         elif dataset_name == "aigle-rn":
             or_im_paths, gt_paths = paths_generator_crack_dataset(dataset_path, "AIGLE_RN")
@@ -293,7 +293,7 @@ def augmentation(im, gt, **kwargs):
                             for shear_ang in shear_angs:
                                 affine_transformed = image.apply_affine_transform(flipped, rot_ang, shear=shear_ang, zx=zoom, zy=zoom, fill_mode="reflect")
                                 affine_transformed_gt = image.apply_affine_transform(flipped_gt, rot_ang, shear=shear_ang, zx=zoom, zy=zoom, fill_mode="reflect")
-                                yield [affine_transformed, affine_transformed_gt]
+                                yield [affine_transformed, np.where(affine_transformed_gt > 0.5, 1.0, 0.0)]
 
 
 # Apply a random transformation to an input pair
@@ -317,7 +317,7 @@ def random_transformation(im, gt, **kwargs):
     affine_transformed_gt = image.apply_affine_transform(flipped_gt, rot_ang, shear=shear_ang, zx=zoom, zy=zoom,
                                                          fill_mode="reflect")
 
-    return affine_transformed, affine_transformed_gt
+    return affine_transformed, np.where(affine_transformed_gt > 0.5, 1.0, 0.0)
 
 
 # Image generators
@@ -444,10 +444,6 @@ def train_image_generator(paths, input_size, batch_size=1, count_samples_mode=Fa
                     continue
 
                 x, y = random_transformation(im, gt, **augmentation_params)
-                if not os.path.exists("test"):
-                    os.makedirs("test")
-                cv2.imwrite("test/%s.png" % n_samples, x)
-                cv2.imwrite("test/%s_gt.png" % n_samples, 255*y)
 
                 x = manual_padding(x, 4)
                 y = manual_padding(y, 4)
@@ -771,52 +767,68 @@ def test_image_from_path(model, input_path, gt_path, rgb_preprocessor=None):
 
 
 # Compare GT and predictions from images obtained by save_results_on_paths()
-def highlight_cracks(or_im, mask):
+def highlight_cracks(or_im, mask, bg_color, fade_intensity):
     highlight_mask = np.zeros(mask.shape, dtype=np.float)
-    highlight_mask[np.where(mask >= 128)] = 1.0
-    highlight_mask[np.where(mask < 128)] = 0.1
+    if bg_color == "black":
+        highlight_mask[np.where(mask >= 128)] = 1.0
+        highlight_mask[np.where(mask < 128)] = fade_intensity
+    else:
+        highlight_mask[np.where(mask >= 128)] = fade_intensity
+        highlight_mask[np.where(mask < 128)] = 1.0
     return or_im * highlight_mask
 
 
-def compare_masks(gt_mask, pred_mask):
-    new_image = np.zeros(gt_mask.shape, dtype=np.float32)
-    new_image[..., 2][np.where(pred_mask[..., 0] >= 128)] = 255
-    new_image[..., 0][np.where(gt_mask[..., 0] >= 128)] = 255
-    new_image[..., 1][np.where((new_image[..., 0] == 255) & (new_image[..., 2] == 255))] = 255
-    new_image[..., 0][np.where((new_image[..., 0] == 255) & (new_image[..., 2] == 255))] = 0
-    new_image[..., 2][np.where((new_image[..., 0] == 0) & (new_image[..., 1] == 255) & (new_image[..., 2] == 255))] = 0
+def compare_masks(gt_mask, pred_mask, bg_color):
+    if bg_color == "black":
+        new_image = np.zeros(gt_mask.shape, dtype=np.float32)
+        new_image[..., 2][np.where(pred_mask[..., 0] >= 128)] = 255
+        new_image[..., 0][np.where(gt_mask[..., 0] >= 128)] = 255
+        new_image[..., 1][np.where((new_image[..., 0] == 255) & (new_image[..., 2] == 255))] = 255
+        new_image[..., 0][np.where((new_image[..., 0] == 255) & (new_image[..., 2] == 255))] = 0
+        new_image[..., 2][np.where((new_image[..., 0] == 0) & (new_image[..., 1] == 255) & (new_image[..., 2] == 255))] = 0
+    else:
+        new_image = 255*np.ones(gt_mask.shape, dtype=np.float32)
+        new_image[..., 0][np.where(pred_mask[..., 0] < 128)] = 0
+        new_image[..., 2][np.where(gt_mask[..., 0] < 128)] = 0
+        new_image[..., 1][np.where((new_image[..., 0]) == 0 & (new_image[..., 1] == 255) & (new_image[..., 2] == 255))] = 0
+        new_image[..., 1][np.where((new_image[..., 2]) == 0 & (new_image[..., 0] == 255) & (new_image[..., 1] == 255))] = 0
+        new_image[..., 1][np.where((new_image[..., 0] == 0) & (new_image[..., 1] == 0) & (new_image[..., 2] == 0))] = 255
+
     return new_image
 
 
-def analyze_gt_pred(im, gt, pred):
-    gt_highlight_cracks = highlight_cracks(im, gt)
-    pred_highlight_cracks = highlight_cracks(im, pred)
-    comparative_mask = compare_masks(gt, pred)
+def analyze_gt_pred(im, gt, pred, bg_color, fade_intensity):
+    if bg_color == "white":
+        gt = 255 - gt
+        pred = 255 - pred
+    gt_highlight_cracks = highlight_cracks(im, gt, bg_color, fade_intensity)
+    pred_highlight_cracks = highlight_cracks(im, pred, bg_color, fade_intensity)
+    comparative_mask = compare_masks(gt, pred, bg_color)
     white_line_v = 255 * np.ones((comparative_mask.shape[0], 1, 3))
     first_row = np.concatenate(
         (im, white_line_v, gt_highlight_cracks, white_line_v, pred_highlight_cracks, white_line_v, comparative_mask),
         axis=1)
     white_line_h = 255 * np.ones((1, first_row.shape[1], 3))
 
-    gt_highlight_cracks = highlight_cracks(255 - im, gt)
-    pred_highlight_cracks = highlight_cracks(255 - im, pred)
+    gt_highlight_cracks = highlight_cracks(255 - im, gt, bg_color, fade_intensity)
+    pred_highlight_cracks = highlight_cracks(255 - im, pred, bg_color, fade_intensity)
     second_row = np.concatenate(
         (255 - im, white_line_v, gt_highlight_cracks, white_line_v, pred_highlight_cracks, white_line_v,
          comparative_mask), axis=1)
     return np.concatenate((first_row, white_line_h, second_row), axis=0)
 
 
-def analyse_resulting_image(image_path):
+def analyse_resulting_image(image_path, bg_color, fade_intensity):
     or_im = cv2.imread(image_path).astype(np.float)
     h, w, c = or_im.shape
     w = int(w / 3)
     im = or_im[:, :w, :]
     gt = or_im[:, w:2 * w, :]
     pred = or_im[:, 2 * w:, :]
-    return analyze_gt_pred(im, gt, pred)
+    return analyze_gt_pred(im, gt, pred, bg_color, fade_intensity)
 
 
-def analyse_resulting_image_folder(folder_path, new_folder=None):
+def analyse_resulting_image_folder(folder_path, bg_color="white", fade_intensity=0.1, new_folder=None):
     if not new_folder:
         new_folder = folder_path + "_mask_comparison"
     if not os.path.exists(new_folder):
@@ -827,5 +839,5 @@ def analyse_resulting_image_folder(folder_path, new_folder=None):
                          key=lambda f: f.lower())
 
     for name in image_names:
-        cv2.imwrite(os.path.join(new_folder, name), analyse_resulting_image(os.path.join(folder_path, name)))
+        cv2.imwrite(os.path.join(new_folder, name), analyse_resulting_image(os.path.join(folder_path, name), bg_color, fade_intensity))
 

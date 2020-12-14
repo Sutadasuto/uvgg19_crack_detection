@@ -1,3 +1,6 @@
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
+
 import argparse
 import cv2
 import numpy as np
@@ -15,6 +18,10 @@ models_dict = get_models_dict()
 
 
 def main(args):
+    # Used for memory error in RTX2070
+    physical_devices = tf.config.experimental.list_physical_devices('GPU')
+    config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
     input_size = (None, None)
     # Load model from JSON file if file path was provided...
     if os.path.exists(args.model):
