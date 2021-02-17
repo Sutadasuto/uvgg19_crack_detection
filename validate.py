@@ -73,15 +73,15 @@ def main(args):
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("dataset_names", type=str, nargs="+",
+    parser.add_argument("-d", "--dataset_names", type=str, nargs="+",
                         help="Must be one of: 'cfd', 'cfd-pruned', 'aigle-rn', 'esar', 'crack500', 'gaps384', "
                              "'cracktree200', 'text'")
-    parser.add_argument("dataset_paths", type=str, nargs="+",
+    parser.add_argument("-p", "--dataset_paths", type=str, nargs="+",
                         help="Path to the folders or files containing the respective datasets as downloaded from the "
                              "original source.")
-    parser.add_argument("model", type=str, help="Network to use.")
-    parser.add_argument("pretrained_weights", type=str,
+    parser.add_argument("-w", "--pretrained_weights", type=str,
                         help="Load trained weights from this location.")
+    parser.add_argument("-m", "--model", type=str, default="uvgg19", help="Network to use.")
     parser.add_argument("--save_to", type=str, default="results",
                         help="Save results in this location (folder is created if it doesn't exist).")
 

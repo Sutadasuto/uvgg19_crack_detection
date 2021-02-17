@@ -76,8 +76,8 @@ def main(args):
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("image_path", type=str, help="Path to image to evaluate.")
-    parser.add_argument("model", type=str, help="Network to use.")
     parser.add_argument("weights_path", type=str, help="Path to pre-trained weights to use.")
+    parser.add_argument("--model", type=str, default="uvgg19", help="Network to use.")
     parser.add_argument("--gt_path", type=str, default=None,
                         help="Path to the Ground Truth if the user wants to use it for comparison. None otherwise.")
     parser.add_argument("--show_result", type=str, default="False",

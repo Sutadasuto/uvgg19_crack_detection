@@ -190,15 +190,19 @@ def main(args):
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset_names", type=str, nargs="+",
-                        help="Must be one of: 'cfd', 'cfd-pruned', 'aigle-rn', 'esar', 'crack500', 'gaps384', "
-                             "'cracktree200', 'text'")
-    parser.add_argument("--dataset_paths", type=str, nargs="+",
+    parser.add_argument("-d", "--dataset_names", type=str, nargs="+",
+                        help="Must be one of: 'cfd', 'aigle-rn', 'esar', 'gaps384', 'cracktree200', 'text'")
+    parser.add_argument("-p", "--dataset_paths", type=str, nargs="+",
                         help="Path to the folders or files containing the respective datasets as downloaded from the "
                              "original source.")
-    parser.add_argument("--model", type=str, default="uvgg19",
+    parser.add_argument("-m", "--model", type=str, default="uvgg19",
                         help="Network to use. It can be either a name from 'models.available_models.py' or a path to a "
                              "json file.")
+    parser.add_argument("-w", "--pretrained_weights", type=str, default=None,
+                        help="Load previous weights from this location.")
+    parser.add_argument("-da", "--use_da", type=str, default="False", help="If 'True', training will be done using "
+                                                                           "data augmentation. If 'False', just raw "
+                                                                           "images will be used.")
     parser.add_argument("--training_crop_size", type=int, nargs=2, default=[256, 256],
                         help="For memory efficiency and being able to admit multiple size images,"
                              "subimages are created by cropping original images to this size windows")
@@ -208,11 +212,6 @@ def parse_args(args=None):
     parser.add_argument("--epochs", type=int, default=150, help="Number of epochs to train.")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for training.")
     parser.add_argument("--patience", type=int, default=20, help="Early stop patience.")
-    parser.add_argument("--pretrained_weights", type=str, default=None,
-                        help="Load previous weights from this location.")
-    parser.add_argument("--use_da", type=str, default="False", help="If 'True', training will be done using data "
-                                                                   "augmentation. If 'False', just raw images will be "
-                                                                   "used.")
     parser.add_argument("--save_validation_paths", type=str, default="False", help="If 'True', a text file "
                                                                                    "'validation_paths.txt' containing "
                                                                                    "the paths of the images used "
