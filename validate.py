@@ -18,6 +18,10 @@ import data
 
 from models.available_models import get_models_dict
 
+# Used for memory error in RTX2070
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+config = tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
 models_dict = get_models_dict()
 
 
