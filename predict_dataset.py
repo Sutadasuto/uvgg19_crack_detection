@@ -81,7 +81,7 @@ def parse_args(args=None):
     parser.add_argument("-p", "--dataset_paths", type=str, nargs="+",
                         help="Path to the folders or files containing the datasets as downloaded from the original "
                              "source.")
-    parser.add_argument("-m", "--model", type=str, help="Network to use.")
+    parser.add_argument("-m", "--model", type=str, default="uvgg19", help="Network to use.")
     parser.add_argument("-w", "--pretrained_weights", type=str,
                         help="Load trained weights from this location.")
     parser.add_argument("--save_to", type=str, default="results",
