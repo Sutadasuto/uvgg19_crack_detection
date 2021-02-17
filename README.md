@@ -79,7 +79,7 @@ Notice that for both, _train_and_validate.py_ and _validate.py_, you can provide
 ### Comparing ground-truth and prediction from a validation script
 To get a color-coded comparison like in Figure 2 from the paper, run:
 ```
-python -c "from data import analyse_resulting_image_folder; analyse_resulting_image_folder(path/to/results_folder)"
+python -c "from data import analyse_resulting_image_folder; analyse_resulting_image_folder('path/to/results_folder')"
 ```
 _results_folder_ can be any of the 4 folders created inside the output folder created by _train_and_validate.py_ (e.g. "results_test_min_val_loss").
 
