@@ -5,7 +5,7 @@ __pycache*
 /*.jpeg
 /*.hdf5
 /*.json
-/results*
+/result*
 /*.txt
 /*.avi
 /*.mp4
