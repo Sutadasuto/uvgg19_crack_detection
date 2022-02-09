@@ -1,5 +1,9 @@
 # uvgg19_crack_detection
-Code used to produce the results presented in _insert our reference_ 
+Code used to produce the results presented in:
+```
+Rill-García, R., Dokládalová, E. and Doklédal, P., 2022. Pixel-accurate road crack detection in presence of inaccurate annotations. Neurocomputing.
+```
+If using this code, kindly cite the paper above.
 
 This repository is compatible with CrackForest [https://github.com/cuilimeng/CrackForest-dataset] dataset; Aigle-RN and ESAR (2 out of the 3 parts of the "CrackDataset")[https://www.irit.fr/~Sylvie.Chambon/Crack_Detection_Database.html] datasets; and the cropped GAPs384 and cracktree200 [https://github.com/fyangneil/pavement-crack-detection] datasets.
 
