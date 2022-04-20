@@ -1,7 +1,17 @@
 # uvgg19_crack_detection
 Code used to produce the results presented in:
 ```
-Rill-García, R., Dokládalová, E. and Doklédal, P., 2022. Pixel-accurate road crack detection in presence of inaccurate annotations. Neurocomputing.
+@article{neurocomputing,
+    title = {Pixel-accurate road crack detection in presence of inaccurate annotations},
+    journal = {Neurocomputing},
+    volume = {480},
+    pages = {1-13},
+    year = {2022},
+    issn = {0925-2312},
+    doi = {https://doi.org/10.1016/j.neucom.2022.01.051},
+    url = {https://www.sciencedirect.com/science/article/pii/S0925231222000728},
+    author = {Rodrigo Rill-García and Eva Dokladalova and Petr Dokládal},
+}    
 ```
 If using this code, kindly cite the paper above.
 
